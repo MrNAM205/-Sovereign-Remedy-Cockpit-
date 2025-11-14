@@ -1,0 +1,5 @@
+{
+  "name": "Estoppel Engine",
+  "description": "A web application to generate sovereign correspondence documents based on commercial law maxims, operationalizing the principles of estoppel and unrebutted affidavits.",
+  "requestFramePermissions": []
+}
