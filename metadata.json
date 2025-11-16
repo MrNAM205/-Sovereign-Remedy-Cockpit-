@@ -1,5 +1,5 @@
 {
-  "name": "Estoppel Engine",
-  "description": "A web application to generate sovereign correspondence documents based on commercial law maxims, operationalizing the principles of estoppel and unrebutted affidavits.",
+  "name": "Sovereign Finance Cockpit",
+  "description": "A cockpit-grade AI system for lawful negotiation, tender, and discharge of financial instruments, based on UCC and sovereign teachings.",
   "requestFramePermissions": []
 }

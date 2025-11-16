@@ -1,47 +1,40 @@
 
 import React from 'react';
 import { Card } from './Card';
+import { Console } from './Console';
+import { CourtroomProcedureCard } from './CourtroomProcedureCard';
 
-const cases = [
-    {
-        name: "Hale v. Henkel (1906)",
-        relevance: "Identity & Standing",
-        summary: "Held that an individual is not bound by corporate privileges of the state unless they consent; distinguishes between the living man and the legal fiction (Strawman)."
-    },
-    {
-        name: "U.S. v. Minker (1956)",
-        relevance: "Jurisdictional Challenge",
-        summary: "Recognized the right of individuals to challenge administrative jurisdiction and demand proof of authority."
-    },
-    {
-        name: "Clearfield Trust Co. v. United States (1943)",
-        relevance: "Commercial Remedy",
-        summary: "Held that when the government enters commerce, it loses sovereign immunity and must operate under commercial law."
-    },
-    {
-        name: "Marbury v. Madison (1803)",
-        relevance: "Due Process",
-        summary: "Affirms that any law repugnant to the Constitution is null and void, a cornerstone for challenging unlawful presentments."
-    },
-    {
-        name: "Bond v. United States (2011)",
-        relevance: "Sovereign Immunity",
-        summary: "Affirms that individuals have standing to challenge federal statutes that infringe on personal sovereignty."
-    }
-];
+const resources = {
+    "Uniform Commercial Code (UCC)": [
+        { name: "UCC Article 3: Negotiable Instruments", desc: "Governs the rights and liabilities of parties in relation to commercial paper." },
+        { name: "UCC Article 9: Secured Transactions", desc: "Pertains to security interests in personal property." },
+    ],
+    "Federal Statutes": [
+        { name: "Fair Credit Reporting Act (FCRA)", desc: "Regulates credit reporting agencies and the information they collect and share." },
+        { name: "Fair Debt Collection Practices Act (FDCPA)", desc: "Prohibits deceptive, abusive, and unfair debt collection practices." },
+        { name: "Truth in Lending Act (TILA)", desc: "Requires disclosures about the terms and cost of credit to consumers." },
+    ],
+    "Foundational Case Law": [
+        { name: "Marbury v. Madison (1803)", desc: "Establishes the principle of judicial review and affirms that laws repugnant to the Constitution are void." },
+        { name: "Clearfield Trust Co. v. United States (1943)", desc: "When the government enters commerce, it operates under commercial law, not sovereign immunity." },
+        { name: "Hale v. Henkel (1906)", desc: "Distinguishes between a living individual and a corporate/legal fiction created by the state." },
+    ]
+};
 
-export const CaseLawCard: React.FC = () => (
-    <Card title="Foundational Case Law">
-        <ul className="space-y-4 text-sm">
-            {cases.map((caseItem, index) => (
-                <li key={index} className="border-l-4 border-green-700 pl-3">
-                    <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-gray-100">{caseItem.name}</h4>
-                        <span className="text-xs bg-gray-600 text-green-300 font-semibold px-2 py-0.5 rounded-full">{caseItem.relevance}</span>
-                    </div>
-                    <p className="text-gray-400 mt-1">{caseItem.summary}</p>
-                </li>
-            ))}
-        </ul>
-    </Card>
+export const LegalResources: React.FC = () => (
+    <Console title="Legal Resources Library">
+        {Object.entries(resources).map(([category, items]) => (
+            <Card title={category} key={category}>
+                <ul className="space-y-3 text-sm">
+                    {items.map(item => (
+                        <li key={item.name} className="border-l-4 border-green-700 pl-3">
+                            <h4 className="font-bold text-gray-100">{item.name}</h4>
+                            <p className="text-gray-400">{item.desc}</p>
+                        </li>
+                    ))}
+                </ul>
+            </Card>
+        ))}
+        <CourtroomProcedureCard />
+    </Console>
 );

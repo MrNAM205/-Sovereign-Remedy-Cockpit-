@@ -1,150 +1,105 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import { Card } from './Card';
-import { DocType, type FormData } from '../types';
+import { Console } from './Console';
+import { type LogEntry } from '../types';
 
-type ScriptType = 'powershell' | 'curl';
+const buttonStyles = "bg-[#238636] border border-[#30363d] text-white p-2 rounded-lg font-bold hover:bg-[#2ea043] transition-colors disabled:bg-gray-600";
+const inputStyles = "bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] w-full p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500";
+const outputStyles = "bg-[#0d1117] border border-dashed border-[#30363d] text-sm whitespace-pre-wrap break-words w-full p-3 rounded-lg text-gray-300";
 
-const generatePowerShellScript = (formData: FormData, docType: DocType): string => {
-    const { manName, fictionName, creditor, claimRef } = formData;
-
-    const identityPayload = `@{
-    strawmanName = "${fictionName || 'LEGAL FICTION NAME'}"
-    livingName   = "${manName || 'Lawful Name'}"
-}`;
-
-    const presentmentPayload = `@{
-    presentmentId = "${claimRef || 'REFERENCE-ID'}"
-    claimant      = "${creditor || 'Claimant Name'}"
-}`;
-
-    let mainAction = `# Select a document type to see the corresponding action.`;
-    if (docType === DocType.ConditionalAcceptance) {
-        mainAction = `
-# Step 2: Send Conditional Acceptance
-Write-Host "→ Generating Conditional Acceptance..."
-Invoke-RestMethod -Uri "http://localhost:3000/api/instrument/generate-ca" -Method POST -Body (${presentmentPayload} | ConvertTo-Json) -ContentType "application/json"`;
-    } else if (docType === DocType.Estoppel10 || docType === DocType.Estoppel28) {
-        const days = docType === DocType.Estoppel10 ? 10 : 28;
-        const estoppelPayload = `@{
-    referenceNotice = "${claimRef || 'REFERENCE-ID'}"
-    daysElapsed     = ${days}
-}`;
-        mainAction = `
-# Step 3: Invoke Estoppel after ${days} days
-Write-Host "→ Generating Notice of Estoppel..."
-Invoke-RestMethod -Uri "http://localhost:3000/api/remedy/generate-estoppel" -Method POST -Body (${estoppelPayload} | ConvertTo-Json) -ContentType "application/json"`;
-    }
-
-    return `# ⚔️ Sovereign Autonomy & Discharge Protocol — PowerShell Ritual
-# This script is a template for automating your correspondence.
-# It requires a compatible backend API running on localhost:3000.
-
-# Step 1: Set Identity Profile
-Write-Host "🛡️ Defining Identity & Standing..."
-Invoke-RestMethod -Uri "http://localhost:3000/api/identity/set-profile" -Method POST -Body (${identityPayload} | ConvertTo-Json) -ContentType "application/json"
-${mainAction}
-
-Write-Host "✅ Protocol Executed. Action logged."
-`;
-};
-
-const generateCurlScript = (formData: FormData, docType: DocType): string => {
-    const { manName, fictionName, creditor, claimRef } = formData;
-
-    const identityPayload = `'{
-    "strawmanName": "${fictionName || 'LEGAL FICTION NAME'}",
-    "livingName": "${manName || 'Lawful Name'}"
-}'`;
-
-    const presentmentPayload = `'{
-    "presentmentId": "${claimRef || 'REFERENCE-ID'}",
-    "claimant": "${creditor || 'Claimant Name'}"
-}'`;
-
-    let mainAction = `# Select a document type to see the corresponding action.`;
-    if (docType === DocType.ConditionalAcceptance) {
-        mainAction = `
-# Step 2: Send Conditional Acceptance
-echo "→ Generating Conditional Acceptance..."
-curl -X POST http://localhost:3000/api/instrument/generate-ca \\
-  -H "Content-Type: application/json" \\
-  -d ${presentmentPayload}`;
-    } else if (docType === DocType.Estoppel10 || docType === DocType.Estoppel28) {
-        const days = docType === DocType.Estoppel10 ? 10 : 28;
-        const estoppelPayload = `'{
-    "referenceNotice": "${claimRef || 'REFERENCE-ID'}",
-    "daysElapsed": ${days}
-}'`;
-        mainAction = `
-# Step 3: Invoke Estoppel after ${days} days
-echo "→ Generating Notice of Estoppel..."
-curl -X POST http://localhost:3000/api/remedy/generate-estoppel \\
-  -H "Content-Type: application/json" \\
-  -d ${estoppelPayload}`;
-    }
-
-    return `#!/bin/bash
-# ⚔️ Sovereign Autonomy & Discharge Protocol — cURL/Bash Ritual
-# This script is a template for automating your correspondence.
-# It requires a compatible backend API running on localhost:3000.
-
-# Step 1: Set Identity Profile
-echo "🛡️ Defining Identity & Standing..."
-curl -X POST http://localhost:3000/api/identity/set-profile \\
-  -H "Content-Type: application/json" \\
-  -d ${identityPayload}
-${mainAction}
-
-echo "✅ Protocol Executed. Action logged."
-`;
-};
-
-interface AutomationCardProps {
-    formData: FormData;
-    docType: DocType;
-    onCopy: (text: string) => void;
-}
-
-export const AutomationCard: React.FC<AutomationCardProps> = ({ formData, docType, onCopy }) => {
-    const [scriptType, setScriptType] = useState<ScriptType>('powershell');
-
-    const scriptContent = useMemo(() => {
-        return scriptType === 'powershell' 
-            ? generatePowerShellScript(formData, docType)
-            : generateCurlScript(formData, docType);
-    }, [formData, docType, scriptType]);
-
-    const buttonStyles = "bg-[#238636] border border-[#30363d] text-white w-full p-2 rounded-lg mt-3 text-sm hover:bg-[#2ea043] transition-colors";
-    const tabBaseStyles = "px-4 py-2 text-sm font-medium rounded-md transition-colors";
-    const activeTabStyles = "bg-green-600 text-white";
-    const inactiveTabStyles = "bg-[#161b22] text-gray-400 hover:bg-[#30363d]";
+export const DebtCollectorLog: React.FC = () => {
+    const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [newLog, setNewLog] = useState({ collector: '', description: '' });
+    const [isLoading, setIsLoading] = useState<number | null>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [ceaseAndDesist, setCeaseAndDesist] = useState('');
     
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setNewLog({ ...newLog, [e.target.name]: e.target.value });
+    };
+
+    const addLog = () => {
+        if (!newLog.collector || !newLog.description) return;
+        const entry: LogEntry = {
+            id: Date.now(),
+            timestamp: new Date().toLocaleString(),
+            ...newLog,
+        };
+        setLogs([entry, ...logs]);
+        setNewLog({ collector: '', description: '' });
+    };
+    
+    const suggestViolations = useCallback(async (logId: number, description: string) => {
+        setIsLoading(logId);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const prompt = `I had this interaction with a debt collector: "${description}". Based on the Fair Debt Collection Practices Act (FDCPA), what potential violations might have occurred? Be specific and list them in a concise markdown format.`;
+            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            setLogs(prevLogs => prevLogs.map(log => log.id === logId ? { ...log, violations: response.text } : log));
+        } catch (err) {
+            console.error(err);
+            alert("Failed to get suggestions. Check console.");
+        } finally {
+            setIsLoading(null);
+        }
+    }, []);
+
+    const generateCeaseAndDesist = useCallback(async () => {
+        if (logs.length === 0) return;
+        setIsGenerating(true);
+        try {
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const logText = logs.map(l => `On ${l.timestamp}, I was contacted by ${l.collector}. The interaction was as follows: ${l.description}`).join('\n\n');
+            const prompt = `Based on the following log of interactions with debt collectors:\n\n${logText}\n\nGenerate a powerful, legally-structured Cease and Desist letter demanding they halt all communication immediately. Reference the FDCPA. Include placeholders for names, addresses, and dates.`;
+            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            setCeaseAndDesist(response.text);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to generate letter. Check console.");
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [logs]);
+    
+    const copyToClipboard = (text: string) => navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+
     return (
-        <Card title="Automation Ritual">
-            <p className="text-xs text-gray-500 mb-4">Generate command-line scripts to automate actions with a compatible backend API.</p>
-            <div className="flex space-x-2 mb-3 p-1 bg-[#0d1117] rounded-lg">
-                <button 
-                    onClick={() => setScriptType('powershell')} 
-                    className={`${tabBaseStyles} ${scriptType === 'powershell' ? activeTabStyles : inactiveTabStyles}`}
-                >
-                    PowerShell
-                </button>
-                <button 
-                    onClick={() => setScriptType('curl')} 
-                    className={`${tabBaseStyles} ${scriptType === 'curl' ? activeTabStyles : inactiveTabStyles}`}
-                >
-                    cURL (Bash)
-                </button>
-            </div>
-            <pre className="bg-[#0d1117] border border-dashed border-[#30363d] text-xs p-3 rounded-lg text-gray-300 overflow-x-auto">
-                <code>
-                    {scriptContent}
-                </code>
-            </pre>
-            <button onClick={() => onCopy(scriptContent)} className={buttonStyles}>
-                Copy Script
-            </button>
-        </Card>
+        <Console title="Debt Collector Log">
+            <Card title="Log New Interaction">
+                <input type="text" name="collector" placeholder="Debt Collector Name" value={newLog.collector} onChange={handleInputChange} className={`${inputStyles} mb-2`} />
+                <textarea name="description" placeholder="Describe the interaction..." rows={3} value={newLog.description} onChange={handleInputChange} className={`${inputStyles} mb-2`} />
+                <button onClick={addLog} className={buttonStyles}>Add Log Entry</button>
+            </Card>
+
+            <Card title="Interaction History">
+                {logs.length > 0 ? (
+                    <div className="space-y-4">
+                        {logs.map(log => (
+                            <div key={log.id} className="p-3 bg-[#161b22] border border-[#30363d] rounded-lg">
+                                <p className="text-xs text-gray-500">{log.timestamp}</p>
+                                <p><strong className="text-gray-200">Collector:</strong> {log.collector}</p>
+                                <p><strong className="text-gray-200">Description:</strong> {log.description}</p>
+                                <button onClick={() => suggestViolations(log.id, log.description)} disabled={isLoading === log.id} className="text-sm text-purple-400 hover:text-purple-300 mt-2 disabled:opacity-50">
+                                    {isLoading === log.id ? 'Analyzing...' : 'Suggest FDCPA Violations'}
+                                </button>
+                                {log.violations && <div className="mt-2 p-2 border-t border-[#30363d] text-xs text-gray-400 prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: log.violations.replace(/\n/g, '<br />') }} />}
+                            </div>
+                        ))}
+                         <button onClick={generateCeaseAndDesist} disabled={isGenerating || logs.length === 0} className={`${buttonStyles} w-full mt-4`}>
+                            {isGenerating ? 'Generating...' : 'Generate Cease & Desist Letter'}
+                        </button>
+                    </div>
+                ) : <p className="text-gray-500">No interactions logged yet.</p>}
+            </Card>
+            
+            {ceaseAndDesist && (
+                 <Card title="Generated Cease & Desist">
+                    <textarea readOnly value={ceaseAndDesist} rows={15} className={outputStyles} />
+                    <button onClick={() => copyToClipboard(ceaseAndDesist)} className={`${buttonStyles} w-full mt-3`}>Copy to Clipboard</button>
+                </Card>
+            )}
+        </Console>
     );
 };

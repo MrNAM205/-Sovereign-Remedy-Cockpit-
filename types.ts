@@ -1,22 +1,41 @@
 
+export interface LogEntry {
+    id: number;
+    timestamp: string;
+    collector: string;
+    description: string;
+    violations?: string;
+}
+
 export enum DocType {
-    ConditionalAcceptance = 'CA',
-    Estoppel10 = 'E10',
-    Estoppel28 = 'E28',
-    FaultAndCure = 'FC',
-    AffidavitOfStatus = 'AOS',
-    DeclarationOfTrust = 'DOT',
-    AppointmentOfTrustee = 'AOT',
-    NoticeToAgent = 'NTA',
+    ConditionalAcceptance = 'ConditionalAcceptance',
+    AffidavitOfStatus = 'AffidavitOfStatus',
+    NoticeToAgent = 'NoticeToAgent',
+    Estoppel10 = 'Estoppel10',
+    Estoppel28 = 'Estoppel28',
+    FaultAndCure = 'FaultAndCure',
+}
+
+export enum TrustDocType {
+    DeclarationOfTrust = 'DeclarationOfTrust',
+    AppointmentOfTrustee = 'AppointmentOfTrustee',
+    ProofOfFunds = 'ProofOfFunds',
+    TrustAmendment = 'TrustAmendment',
+    AssetTransfer = 'AssetTransfer',
 }
 
 export interface FormData {
-    manName: string;
-    fictionName: string;
-    creditor: string;
-    claimRef: string;
-    situationContext: string;
+    creditor?: string;
+    claimRef?: string;
+    manName?: string;
+    fictionName?: string;
     proofPoints: string[];
     trustName?: string;
     trusteeName?: string;
+    // For Trust Ops
+    vehicleVIN?: string;
+    purchasePrice?: string;
+    amendmentDetails?: string;
+    assetDescription?: string;
+    assetRecipient?: string;
 }

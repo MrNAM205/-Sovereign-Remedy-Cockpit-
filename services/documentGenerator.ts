@@ -189,3 +189,95 @@ You and your principal are now bound by the contents of this and all related cor
 ${generateFooter(data)}
 `;
 }
+
+export function generateProofOfFundsLetter(data: FormData): string {
+    const { trustName, trusteeName, manName, creditor, vehicleVIN, purchasePrice } = data;
+    const date = new Date().toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    return `
+From the Office of the Trustee
+${trustName || '[Trust Name]'}
+[Trust Address]
+
+Date: ${date}
+
+TO: ${creditor || '[Dealership Name]'}
+
+RE: PROOF OF FUNDS & INTENT TO PURCHASE
+VEHICLE IDENTIFICATION NUMBER (VIN): ${vehicleVIN || '[Vehicle VIN]'}
+
+Dear Sirs/Madams,
+
+This letter serves as formal notification that the ${trustName || '[Trust Name]'} (hereinafter "the Trust") has approved the acquisition of the above-referenced vehicle.
+
+The Trustee for the Trust, ${trusteeName || '[Trustee Name]'}, is authorized to tender the agreed upon purchase price of ${purchasePrice ? '$' + purchasePrice : '[Purchase Price]'}.
+
+This letter shall serve as sufficient proof of funds for this private, non-commercial conveyance. The Trust will be providing its own financing and will not be seeking or accepting any third-party, dealer-arranged financing.
+
+Please prepare the buyer's order or purchase agreement reflecting the Trust as the purchaser and forward it to the Trustee for execution.
+
+This is not an application for credit. No credit inquiry is authorized.
+
+Sincerely,
+
+By:
+________________________________
+${trusteeName || '[Trustee Name]'}, Trustee
+For and on behalf of ${trustName || '[Trust Name]'}
+`;
+}
+
+export function generateTrustAmendment(data: FormData): string {
+    const { trustName, amendmentDetails, manName } = data;
+    return `
+${generateHeader(data)}
+
+AMENDMENT TO THE DECLARATION OF TRUST
+OF
+${trustName || '[Trust Name]'}
+
+BE IT KNOWN TO ALL, that I, ${manName}, the Grantor, having reserved the right to amend the trust, do hereby make the following amendment to the Declaration of Trust dated [Original Date of Declaration].
+
+Article [Number] is hereby amended to read as follows:
+
+${amendmentDetails || '[Specify the amendment details here. For example: "The name of the Trustee is hereby changed to Jane Smith." Or "A new article is added to detail the process for asset distribution."]' }
+
+All other provisions of the Declaration of Trust shall remain in full force and effect.
+
+IN WITNESS WHEREOF, the Grantor has executed this amendment on this day.
+
+${generateFooter(data)}
+`;
+}
+
+export function generateAssetTransfer(data: FormData): string {
+    const { trustName, trusteeName, assetDescription, assetRecipient } = data;
+    const date = new Date().toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    return `
+From the Office of the Trustee
+${trustName || '[Trust Name]'}
+[Trust Address]
+
+Date: ${date}
+
+NOTICE OF ASSET TRANSFER
+
+This document serves as notice that the Trustee of the ${trustName || '[Trust Name]'}, ${trusteeName || '[Trustee Name]'}, has authorized the transfer of the following trust asset:
+
+Asset Description:
+${assetDescription || '[Describe the asset being transferred, e.g., "Real property located at 123 Main Street", "100 shares of XYZ Corp stock", "Vehicle with VIN: XXXXX"]'}
+
+This asset is hereby conveyed from the Trust to:
+${assetRecipient || '[Name of Recipient/Entity]'}
+
+This transfer is made in accordance with the powers granted to the Trustee under the terms of the Declaration of Trust.
+
+Sincerely,
+
+By:
+________________________________
+${trusteeName || '[Trustee Name]'}, Trustee
+For and on behalf of ${trustName || '[Trust Name]'}
+`;
+}
